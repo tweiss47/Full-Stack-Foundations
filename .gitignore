@@ -2,6 +2,7 @@
 
 # SQL Lite DBs - projects need to be able to recreate them
 *.db
+__pycache__
 
 # Created by .gitignore support plugin (hsz.mobi)
 ### JetBrains template

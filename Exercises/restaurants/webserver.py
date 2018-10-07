@@ -1,36 +1,52 @@
 from http.server import BaseHTTPRequestHandler, HTTPServer
 from urllib.parse import parse_qs
+from sqlalchemy import create_engine
+from sqlalchemy.orm import sessionmaker
+from database_setup import Base, Restaurant, MenuItem
 
 
 class WebServerHandler(BaseHTTPRequestHandler):
-    # Class variable to hold the message. Each request generates a new
-    # RequestHandler instance
-    message = 'Hello?'
 
     def do_GET(self):
         try:
-            if self.path.endswith('/hello'):
-                output = '''
+            if self.path.endswith('/restaurants'):
+                restaurants_template = '''
                 <html>
+                    <head>
+                        <title>Restaurants</title>
+                    </head>
                     <body>
-                        <p>How about this?</p>
-                        <p>{}</p>
-                        <form action='/hello' method='post'>
-                            <label>Message:</label>
-                            <input type='text' name='message'></input><br/>
-                            <input type='submit'></input>
-                        </form>
+                        <h1>Restaurants</h1>
+                        {}
                     </body>
                 </html>
-                '''.format(WebServerHandler.message)
+                '''
+
+                # Get the list of restaurants from the database
+
+                # Initialize the db session
+                engine = create_engine('sqlite:///restaurantmenu.db')
+                Base.metadata.bind = engine
+                DBSession = sessionmaker(bind = engine)
+                session = DBSession()
+
+                # Build a list of items to output
+                restaurant_list = ''
+                rows = session.query(Restaurant).order_by(Restaurant.name)
+                for row in rows:
+                    restaurant_list += '<p>{}</p>'.format(row.name)
+
+                output = restaurants_template.format(restaurant_list)
                 output = output.encode()
 
                 self.send_response(200)
                 self.send_header('Content-type', 'text/html')
                 self.send_header('Content-length', len(output))
                 self.end_headers()
-
                 self.wfile.write(output)
+
+                # Clean up the db session
+                session.close()
                 return
 
             raise IOError()
