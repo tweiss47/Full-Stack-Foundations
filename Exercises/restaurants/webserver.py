@@ -34,7 +34,12 @@ class WebServerHandler(BaseHTTPRequestHandler):
                 restaurant_list = ''
                 rows = session.query(Restaurant).order_by(Restaurant.name)
                 for row in rows:
-                    restaurant_list += '<p>{}</p>'.format(row.name)
+                    restaurant_list += '''
+                    <p>{}<br/>
+                    <a href='#'>Edit</a>
+                    <a href='#'>Delete</a>
+                    </p>
+                    '''.format(row.name)
 
                 output = restaurants_template.format(restaurant_list)
                 output = output.encode()
