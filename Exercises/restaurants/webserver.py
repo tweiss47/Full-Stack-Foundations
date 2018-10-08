@@ -7,51 +7,58 @@ from database_setup import Base, Restaurant, MenuItem
 
 class WebServerHandler(BaseHTTPRequestHandler):
 
+    def renderRestaurantsPage(self):
+        restaurants_template = '''
+        <html>
+            <head>
+                <title>Restaurants</title>
+            </head>
+            <body>
+                <h1>Restaurants</h1>
+                <p><a href='/restaurants/new'></a></p>
+                {}
+            </body>
+        </html>'''
+
+        # Get the list of restaurants from the database
+        # Initialize the db session
+        engine = create_engine('sqlite:///restaurantmenu.db')
+        Base.metadata.bind = engine
+        DBSession = sessionmaker(bind = engine)
+        session = DBSession()
+
+        # Build a list of the restaurant items to output
+        restaurant_list = ''
+        rows = session.query(Restaurant).order_by(Restaurant.name)
+        for row in rows:
+            restaurant_list += '''
+            <p>{}<br/>
+            <a href='#'>Edit</a>
+            <a href='#'>Delete</a>
+            </p>
+            '''.format(row.name)
+
+        # Clean up the db session
+        session.close()
+
+        # build and encode the response
+        output = restaurants_template.format(restaurant_list)
+        return output.encode()
+
+
+    def sendResponse(self, output, type='text/html'):
+        self.send_response(200)
+        self.send_header('Content-type', type)
+        self.send_header('Content-length', len(output))
+        self.end_headers()
+        self.wfile.write(output)
+
+
     def do_GET(self):
         try:
             if self.path.endswith('/restaurants'):
-                restaurants_template = '''
-                <html>
-                    <head>
-                        <title>Restaurants</title>
-                    </head>
-                    <body>
-                        <h1>Restaurants</h1>
-                        {}
-                    </body>
-                </html>
-                '''
-
-                # Get the list of restaurants from the database
-
-                # Initialize the db session
-                engine = create_engine('sqlite:///restaurantmenu.db')
-                Base.metadata.bind = engine
-                DBSession = sessionmaker(bind = engine)
-                session = DBSession()
-
-                # Build a list of items to output
-                restaurant_list = ''
-                rows = session.query(Restaurant).order_by(Restaurant.name)
-                for row in rows:
-                    restaurant_list += '''
-                    <p>{}<br/>
-                    <a href='#'>Edit</a>
-                    <a href='#'>Delete</a>
-                    </p>
-                    '''.format(row.name)
-
-                output = restaurants_template.format(restaurant_list)
-                output = output.encode()
-
-                self.send_response(200)
-                self.send_header('Content-type', 'text/html')
-                self.send_header('Content-length', len(output))
-                self.end_headers()
-                self.wfile.write(output)
-
-                # Clean up the db session
-                session.close()
+                output = self.renderRestaurantsPage()
+                self.sendResponse(output)
                 return
 
             raise IOError()
