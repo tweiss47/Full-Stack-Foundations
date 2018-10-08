@@ -15,17 +15,13 @@ class WebServerHandler(BaseHTTPRequestHandler):
             </head>
             <body>
                 <h1>Restaurants</h1>
-                <p><a href='/restaurants/new'></a></p>
+                <p><a href='/restaurants/new'>Add a New Restaurant</a></p>
                 {}
             </body>
         </html>'''
 
         # Get the list of restaurants from the database
-        # Initialize the db session
-        engine = create_engine('sqlite:///restaurantmenu.db')
-        Base.metadata.bind = engine
-        DBSession = sessionmaker(bind = engine)
-        session = DBSession()
+        session = self.getDbSession()
 
         # Build a list of the restaurant items to output
         restaurant_list = ''
@@ -46,6 +42,24 @@ class WebServerHandler(BaseHTTPRequestHandler):
         return output.encode()
 
 
+    def renderAddRestaurantPage(self):
+        output = '''
+        <html>
+            <head>
+                <title>Add a Restaurant</title>
+            </head>
+            <body>
+                <h1>Add a New Restaurant</h1>
+                <form action='/restaurant/add' method='post'>
+                    <label>Name:</label>
+                    <input type='text' name='name'></input><br/>
+                    <input type='submit'></input>
+                </form>
+            </body>
+        </html>'''
+        return output.encode()
+
+
     def sendResponse(self, output, type='text/html'):
         self.send_response(200)
         self.send_header('Content-type', type)
@@ -54,10 +68,23 @@ class WebServerHandler(BaseHTTPRequestHandler):
         self.wfile.write(output)
 
 
+    def getDbSession(self):
+        # Initialize the db session
+        engine = create_engine('sqlite:///restaurantmenu.db')
+        Base.metadata.bind = engine
+        DBSession = sessionmaker(bind = engine)
+        return DBSession()
+
+
     def do_GET(self):
         try:
             if self.path.endswith('/restaurants'):
                 output = self.renderRestaurantsPage()
+                self.sendResponse(output)
+                return
+
+            if self.path.endswith('/restaurants/new'):
+                output = self.renderAddRestaurantPage()
                 self.sendResponse(output)
                 return
 
@@ -68,24 +95,37 @@ class WebServerHandler(BaseHTTPRequestHandler):
 
 
     def do_POST(self):
-        # Extract the post message
-        post_len = int(self.headers.get('Content-length', 0))
-        post_data = self.rfile.read(post_len).decode()
-        post_params = parse_qs(post_data)
-        if 'message' not in post_params:
-            return self.send_error(
-                400,
-                message='Bad Request',
-                explain='Parameter "message" is required.'
-            )
-        # global message
-        WebServerHandler.message = post_params['message'][0]
+        try:
+            # Extract the post message
+            post_len = int(self.headers.get('Content-length', 0))
+            post_data = self.rfile.read(post_len).decode()
+            post_params = parse_qs(post_data)
 
-        # Redirect to form page
-        self.send_response(301)
-        self.send_header('Location', '/hello')
-        self.end_headers()
-        return
+            if self.path.endswith('/restaurant/add'):
+                if 'name' not in post_params:
+                    return self.send_error(
+                        400,
+                        message='Bad Request',
+                        explain='Parameter "message" is required.'
+                    )
+
+                name = post_params['name'][0]
+
+                session = self.getDbSession()
+                session.add(Restaurant(name = name))
+                session.commit()
+                session.close()
+
+                # Redirect to restaurant list page
+                self.send_response(301)
+                self.send_header('Location', '/restaurants')
+                self.end_headers()
+                return
+
+            raise IOError()
+
+        except IOError:
+            self.send_error(404, 'File not found {}'.format(self.path))
 
 
 def main():
