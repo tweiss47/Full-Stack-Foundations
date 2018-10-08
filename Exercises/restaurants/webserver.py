@@ -29,10 +29,10 @@ class WebServerHandler(BaseHTTPRequestHandler):
         for row in rows:
             restaurant_list += '''
             <p>{}<br/>
-            <a href='#'>Edit</a>
-            <a href='#'>Delete</a>
+            <a href='/restaurants/{}/edit'>Edit</a>
+            <a href='/restaurants/{}/delete'>Delete</a>
             </p>
-            '''.format(row.name)
+            '''.format(row.name, row.id, row.id)
 
         # Clean up the db session
         session.close()
@@ -57,6 +57,56 @@ class WebServerHandler(BaseHTTPRequestHandler):
                 </form>
             </body>
         </html>'''
+        return output.encode()
+
+
+    def renderEditRestaurantPage(self, id):
+        edit_template = '''
+        <html>
+            <head>
+                <title>Edit a Restaurant</title>
+            </head>
+            <body>
+                <h1>Edit a Restaurant</h1>
+                <form action='/restaurant/edit' method='post'>
+                    <label>Name:</label>
+                    <input type='text' name='name' value='{}'/><br/>
+                    <input type='submit'/>
+                    <input type='hidden' name='id' value='{}'/>
+                </form>
+            </body>
+        </html>'''
+
+        session = self.getDbSession()
+        restaurant = session.query(Restaurant).filter_by(id = id).one()
+        name = restaurant.name
+        session.close()
+
+        output = edit_template.format(name, id)
+        return output.encode()
+
+
+    def renderDeleteRestaurantPage(self, id):
+        delete_template = '''
+        <html>
+            <head>
+                <title>Delete a Restaurant</title>
+            </head>
+            <body>
+                <h1>Are you sure you want to delete "{}"</h1>
+                <form action='/restaurant/delete' method='post'>
+                    <input type='submit'/>
+                    <input type='hidden' name='id' value='{}'/>
+                </form>
+            </body>
+        </html>'''
+
+        session = self.getDbSession()
+        restaurant = session.query(Restaurant).filter_by(id = id).one()
+        name = restaurant.name
+        session.close()
+
+        output = delete_template.format(name, id)
         return output.encode()
 
 
@@ -88,6 +138,18 @@ class WebServerHandler(BaseHTTPRequestHandler):
                 self.sendResponse(output)
                 return
 
+            if self.path.endswith('/edit'):
+                id = int(self.path.split('/')[-2])
+                output = self.renderEditRestaurantPage(id)
+                self.sendResponse(output)
+                return
+
+            if self.path.endswith('/delete'):
+                id = int(self.path.split('/')[-2])
+                output = self.renderDeleteRestaurantPage(id)
+                self.sendResponse(output)
+                return
+
             raise IOError()
 
         except IOError:
@@ -106,13 +168,57 @@ class WebServerHandler(BaseHTTPRequestHandler):
                     return self.send_error(
                         400,
                         message='Bad Request',
-                        explain='Parameter "message" is required.'
+                        explain='Missing parameter values in POST'
                     )
 
                 name = post_params['name'][0]
 
                 session = self.getDbSession()
                 session.add(Restaurant(name = name))
+                session.commit()
+                session.close()
+
+                # Redirect to restaurant list page
+                self.send_response(301)
+                self.send_header('Location', '/restaurants')
+                self.end_headers()
+                return
+
+            if self.path.endswith('/restaurant/edit'):
+                if 'name' not in post_params or 'id' not in post_params:
+                    return self.send_error(
+                        400,
+                        message='Bad Request',
+                        explain='Missing parameter values in POST'
+                    )
+
+                name = post_params['name'][0]
+                id = int(post_params['id'][0])
+                session = self.getDbSession()
+                restaurant = session.query(Restaurant).filter_by(id = id).one()
+                restaurant.name = name
+                session.add(restaurant)
+                session.commit()
+                session.close()
+
+                # Redirect to restaurant list page
+                self.send_response(301)
+                self.send_header('Location', '/restaurants')
+                self.end_headers()
+                return
+
+            if self.path.endswith('/restaurant/delete'):
+                if 'id' not in post_params:
+                    return self.send_error(
+                        400,
+                        message='Bad Request',
+                        explain='Missing parameter values in POST'
+                    )
+
+                id = int(post_params['id'][0])
+                session = self.getDbSession()
+                restaurant = session.query(Restaurant).filter_by(id = id).one()
+                session.delete(restaurant)
                 session.commit()
                 session.close()
 
