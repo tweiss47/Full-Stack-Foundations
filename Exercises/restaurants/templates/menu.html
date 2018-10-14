@@ -1,6 +1,15 @@
 <html>
     <h1>Welcome to {{restaurant.name}}</h1>
     <h2>Menu</h2>
+    {% with messages = get_flashed_messages() %}
+        {% if messages %}
+            <ul class="flashes">
+            {% for message in messages %}
+                <li>{{message}}</li>
+            {% endfor %}
+            </ul>
+        {% endif %}
+    {% endwith %}
     {% for item in menu %}
     <p>
         {{item.name}} <br/>
