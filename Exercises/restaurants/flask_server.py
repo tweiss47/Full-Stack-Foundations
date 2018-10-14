@@ -24,7 +24,7 @@ def restaurants():
     return output
 
 
-@app.route('/restaurants/<int:restaurant_id>')
+@app.route('/restaurants/<int:restaurant_id>/menu')
 def menu_items(restaurant_id):
     session = getDbSession()
     restaurant = session.query(Restaurant).filter_by(id=restaurant_id).one()
@@ -34,7 +34,7 @@ def menu_items(restaurant_id):
     return output
 
 
-@app.route('/restaurants/<int:restaurant_id>/<int:menu_item_id>/edit', methods=['GET', 'POST'])
+@app.route('/restaurants/<int:restaurant_id>/menu/<int:menu_item_id>/edit', methods=['GET', 'POST'])
 def edit_menu_item(restaurant_id, menu_item_id):
     session = getDbSession()
     menu_item = session.query(MenuItem).filter_by(id=menu_item_id).one()
@@ -54,7 +54,7 @@ def edit_menu_item(restaurant_id, menu_item_id):
         return output
 
 
-@app.route('/restaurants/<int:restaurant_id>/<int:menu_item_id>/delete', methods=['GET', 'POST'])
+@app.route('/restaurants/<int:restaurant_id>/menu/<int:menu_item_id>/delete', methods=['GET', 'POST'])
 def delete_menu_item(restaurant_id, menu_item_id):
     session = getDbSession()
     menu_item = session.query(MenuItem).filter_by(id=menu_item_id).one()
