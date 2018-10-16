@@ -1,0 +1,44 @@
+<html>
+    <h1>Add a New Restaurant</h1>
+    <form action="{{url_for('new_restaurant')}}" method="POST">
+        <div>
+            <label for='name'>Restaurant Name:</label>
+            <input type='text' name='name'/>
+        </div>
+        <div>
+            <legend>Menu Course:</legend>
+            <ul>
+                <li>
+                    <label for='course'>Entree</label>
+                    <input type='radio' checked id='course' name='course' value='Entree'>
+                </li>
+                <li>
+                    <label for='course'>Appetizer</label>
+                    <input type='radio' id='course' name='course' value='Appetizer'>
+                </li>
+                <li>
+                    <label for='course'>Beverage</label>
+                    <input type='radio' id='course' name='course' value='Beverage'>
+                </li>
+                <li>
+                    <label for='course'>Dessert</label>
+                    <input type='radio' id='course' name='course' value='Dessert'>
+                </li>
+            </ul>
+        </div>
+        <div>
+            <label for='description'>Description:</label>
+            <textarea cols='30' rows='4' name='description'></textarea>
+        </div>
+        <div>
+            <label for='price'>Price:</label>
+            <input type='text' name='price'>
+        </div>
+        <div>
+            <button type="submit">Add</button>
+        </div>
+        <div>
+            <a href="{{url_for('show_restaurants')}}">Cancel</a>
+        </div>
+    </form>
+</html>

@@ -16,28 +16,26 @@ app = Flask(__name__)
 @app.route('/')
 @app.route('/restaurants')
 def show_restaurants():
-    output = ''
     session = getDbSession()
-    rows = session.query(Restaurant).order_by(Restaurant.name)
-    for row in rows:
-        output += row.name + '<br/>'
+    restaurants = session.query(Restaurant).order_by(Restaurant.name)
+    output = render_template('restaurants.html', restaurants=restaurants)
     session.close()
     return output
 
 
 @app.route('/restaurants/new')
 def new_restaurant():
-    return 'Create a new restaurant'
+    return render_template('restaurant_new.html')
 
 
 @app.route('/restaurants/<int:restaurant_id>/edit')
 def edit_restaurant(restaurant_id):
-    return 'Edit restaurant id {}'.format(restaurant_id)
+    return render_template('restaurant_edit.html', restaurant={'name': 'Dummy Restaurant', 'id': 10000})
 
 
 @app.route('/restaurants/<int:restaurant_id>/delete')
 def delete_restaurant(restaurant_id):
-    return 'Delete restaurant id {}'.format(restaurant_id)
+    return render_template('restaurant_delete.html', restaurant={'name': 'Dummy Restaurant', 'id': 10000})
 
 
 @app.route('/restaurants/<int:restaurant_id>')
@@ -53,7 +51,7 @@ def show_menu(restaurant_id):
 
 @app.route('/restaurants/<int:restaurant_id>/menu/new')
 def new_menu_item(restaurant_id):
-    return 'New menu item for {}'.format(restaurant_id)
+    return render_template('menu_new.html', restaurant={'name': 'Dummy Restaurant', 'id': 10000})
 
 
 @app.route('/restaurants/<int:restaurant_id>/menu/<int:menu_item_id>/JSON')
@@ -78,7 +76,7 @@ def edit_menu_item(restaurant_id, menu_item_id):
         return redirect(url_for('show_menu', restaurant_id = restaurant_id))
     else:
         restaurant = session.query(Restaurant).filter_by(id=restaurant_id).one()
-        output = render_template( 'edit.html', restaurant = restaurant, item = menu_item)
+        output = render_template( 'menu_edit.html', restaurant = restaurant, item = menu_item)
         session.close()
         return output
 
@@ -96,7 +94,7 @@ def delete_menu_item(restaurant_id, menu_item_id):
         flash('Item {} was deleted'.format(old_name))
         return redirect(url_for('show_menu', restaurant_id = restaurant_id))
     else:
-        output = render_template( 'delete.html', restaurant = restaurant, item = menu_item)
+        output = render_template( 'menu_delete.html', restaurant = restaurant, item = menu_item)
         session.close()
         return output
 
