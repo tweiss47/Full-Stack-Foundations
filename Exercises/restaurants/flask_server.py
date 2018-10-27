@@ -38,9 +38,25 @@ def new_restaurant():
         return render_template('restaurant_new.html')
 
 
-@app.route('/restaurants/<int:restaurant_id>/edit')
+@app.route('/restaurants/<int:restaurant_id>/edit', methods=['GET', 'POST'])
 def edit_restaurant(restaurant_id):
-    return render_template('restaurant_edit.html', restaurant={'name': 'Dummy Restaurant', 'id': 10000})
+    if request.method == 'POST':
+        session = getDbSession()
+        restaurant = session.query(Restaurant).filter_by(id=restaurant_id).one()
+        old_name = restaurant.name
+        new_name = request.form['name']
+        restaurant.name = new_name
+        session.add(restaurant)
+        session.commit()
+        session.close()
+        flash('Restaurant {} was renamed to {}'.format(old_name, new_name))
+        return redirect(url_for('show_restaurants'))
+    else:
+        session = getDbSession()
+        restaurant = session.query(Restaurant).filter_by(id=restaurant_id).one()
+        output = render_template('restaurant_edit.html', restaurant=restaurant)
+        session.close()
+        return output
 
 
 @app.route('/restaurants/<int:restaurant_id>/delete')
