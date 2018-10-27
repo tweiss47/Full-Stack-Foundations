@@ -6,6 +6,7 @@
         <div class = "pane">
             <div class = "header">
                 <h1>Welcome to {{restaurant.name}}</h1>
+                <div><a href="{{url_for('new_menu_item', restaurant_id=restaurant.id)}}">Add</a> a new menu item</div>
                 <h2>Menu</h2>
             </div>
             {% with messages = get_flashed_messages() %}

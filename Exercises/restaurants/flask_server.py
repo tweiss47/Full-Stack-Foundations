@@ -84,14 +84,35 @@ def show_menu(restaurant_id):
     session = getDbSession()
     restaurant = session.query(Restaurant).filter_by(id=restaurant_id).one()
     menu = session.query(MenuItem).filter_by(restaurant_id=restaurant_id)
-    output = render_template( 'menu.html', restaurant = restaurant, menu = menu)
+    output = render_template('menu.html', restaurant = restaurant, menu = menu)
     session.close()
     return output
 
 
-@app.route('/restaurants/<int:restaurant_id>/menu/new')
+@app.route('/restaurants/<int:restaurant_id>/menu/new', methods=['GET', 'POST'])
 def new_menu_item(restaurant_id):
-    return render_template('menu_new.html', restaurant={'name': 'Dummy Restaurant', 'id': 10000})
+    if request.method == 'POST':
+        item_name = request.form['name']
+        session = getDbSession()
+        restaurant = session.query(Restaurant).filter_by(id=restaurant_id).one()
+        item = MenuItem(
+            name=item_name,
+            description=request.form['description'],
+            course=request.form['course'],
+            price=request.form['price'],
+            restaurant=restaurant
+        )
+        session.add(item)
+        session.commit()
+        session.close()
+        flash('{}, was added to the menu'.format(item_name))
+        return redirect(url_for('show_menu', restaurant_id=restaurant_id))
+    else:
+        session = getDbSession()
+        restaurant = session.query(Restaurant).filter_by(id=restaurant_id).one()
+        output = render_template('menu_new.html', restaurant=restaurant)
+        session.close()
+        return output
 
 
 @app.route('/restaurants/<int:restaurant_id>/menu/<int:menu_item_id>/JSON')
