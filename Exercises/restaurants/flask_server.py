@@ -59,9 +59,23 @@ def edit_restaurant(restaurant_id):
         return output
 
 
-@app.route('/restaurants/<int:restaurant_id>/delete')
+@app.route('/restaurants/<int:restaurant_id>/delete', methods=['GET', 'POST'])
 def delete_restaurant(restaurant_id):
-    return render_template('restaurant_delete.html', restaurant={'name': 'Dummy Restaurant', 'id': 10000})
+    if request.method == 'POST':
+        session = getDbSession()
+        restaurant = session.query(Restaurant).filter_by(id=restaurant_id).one()
+        name = restaurant.name
+        session.delete(restaurant)
+        session.commit()
+        session.close()
+        flash('Restaurant {} was removed from the listing'.format(name))
+        return redirect(url_for('show_restaurants'))
+    else:
+        session = getDbSession()
+        restaurant = session.query(Restaurant).filter_by(id=restaurant_id).one()
+        output = render_template('restaurant_delete.html', restaurant=restaurant)
+        session.close()
+        return output
 
 
 @app.route('/restaurants/<int:restaurant_id>')
