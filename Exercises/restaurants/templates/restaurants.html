@@ -5,6 +5,9 @@
         <div class = "pane">
             <div class = "header">
                 <h1>Restaurants in Town</h1>
+                <div>
+                    <a href='{{url_for("new_restaurant")}}'>Add</a> a new restaurant
+                </div>
             </div>
             {% with messages = get_flashed_messages() %}
                 {% if messages %}
