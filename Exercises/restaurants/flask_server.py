@@ -23,6 +23,15 @@ def show_restaurants():
     return output
 
 
+@app.route('/restaurants/JSON')
+def restaurants_json():
+    session = getDbSession()
+    restaurants = session.query(Restaurant).order_by(Restaurant.name)
+    data = {'restaurants': [r.serialize for r in restaurants]}
+    session.close()
+    return jsonify(data)
+
+
 @app.route('/restaurants/new', methods=['GET', 'POST'])
 def new_restaurant():
     if request.method == 'POST':
@@ -87,6 +96,16 @@ def show_menu(restaurant_id):
     output = render_template('menu.html', restaurant = restaurant, menu = menu)
     session.close()
     return output
+
+
+@app.route('/restaurants/<int:restaurant_id>/menu/JSON')
+def restaurant_menu_json(restaurant_id):
+    session = getDbSession()
+    restaurant = session.query(Restaurant).filter_by(id=restaurant_id).one()
+    menu = session.query(MenuItem).filter_by(restaurant_id=restaurant_id)
+    data = {'menu': {'restaurant': restaurant.serialize, 'menu': [item.serialize for item in menu]} }
+    session.close()
+    return jsonify(data)
 
 
 @app.route('/restaurants/<int:restaurant_id>/menu/new', methods=['GET', 'POST'])
